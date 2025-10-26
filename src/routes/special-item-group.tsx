@@ -138,7 +138,7 @@ const typeRegex = /Type\t([a-zA-Z]+)/im;
 const vnumRegex = /Vnum\t([a-zA-Z0-9]+)/im;
 const effectRegex = /Effect\t"([^"]*)"/im;
 const normalRegex = /([0-9]+)\t([^\t]+)\t([0-9]+)\t([0-9]+)(?:\t([0-9]+))?/gim;
-const attributeRegex = /([0-9]+)\t([0-9]+)/gim;
+const attributeRegex = /([0-9]+)\t([0-9]+)\t([0-9]+)/gim;
 
 const processNormalRegex = (r: RegExpExecArray): CommonRowItem => {
   return {
@@ -314,8 +314,8 @@ function RouteComponent() {
             const rows: AttributeRow["rows"] = [];
             for (const r of group[2].matchAll(attributeRegex)) {
               rows.push({
-                apply_type: Number(r[1]),
-                apply_value: Number(r[2]),
+                apply_type: Number(r[2]),
+                apply_value: Number(r[3]),
               });
             }
 
@@ -447,7 +447,27 @@ function RouteComponent() {
                   return (
                     <div className="bg-muted/50 border-b">
                       {match(type)
-                        .with("attribute", () => "Attributes")
+                        .with("attribute", () => (
+                          <Table>
+                            <TableHeader>
+                              <TableRow className="hover:bg-transparent!">
+                                <TableHead>Attribute</TableHead>
+                                <TableHead>Value</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {(rows as AttributeRow["rows"]).map((r) => (
+                                <TableRow
+                                  key={`${id}.${r.apply_type}`}
+                                  className="hover:bg-muted"
+                                >
+                                  <TableCell>{r.apply_type}</TableCell>
+                                  <TableCell>{r.apply_value}</TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        ))
                         .otherwise(() => (
                           <Table>
                             <TableHeader>
