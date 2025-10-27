@@ -47,6 +47,27 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  attributeRegex,
+  effectRegex,
+  groupRegex,
+  normalRegex,
+  typeRegex,
+  vnumRegex,
+} from "@/lib/matches/special-item-group";
+import useApplies from "@/hooks/use-applies";
 
 export interface SpecialItemGroup {
   $schema: string;
@@ -70,7 +91,7 @@ interface BaseRow {
 export interface AttributeRow extends BaseRow {
   type: "attribute";
   rows: {
-    apply_type: number;
+    apply_type: number | string;
     apply_value: number;
   }[];
 }
@@ -131,14 +152,8 @@ export const Route = createFileRoute("/special-item-group")({
 
 const schema = z.object({
   input: z.string().nonempty(),
+  useApplies: z.string().transform((v) => v === "true"),
 });
-
-const groupRegex = /Group\s+([^\n]+)\s*\n\{([^}]*)\}/gim;
-const typeRegex = /Type\t([a-zA-Z]+)/im;
-const vnumRegex = /Vnum\t([a-zA-Z0-9]+)/im;
-const effectRegex = /Effect\t"([^"]*)"/im;
-const normalRegex = /([0-9]+)\t([^\t]+)\t([0-9]+)\t([0-9]+)(?:\t([0-9]+))?/gim;
-const attributeRegex = /([0-9]+)\t([0-9]+)\t([0-9]+)/gim;
 
 const processNormalRegex = (r: RegExpExecArray): CommonRowItem => {
   return {
@@ -232,10 +247,19 @@ function RouteComponent() {
   const [result, setResult, deleteResult] =
     useLocalStorage<SpecialItemGroup | null>("special-item-group", null);
   const [errors, setErrors] = useState<string[]>([]);
+  const {
+    applies,
+    setApplies,
+    applyMap,
+    applyTypeNames,
+    setApplyTypeNames,
+    applyTypeNameMap,
+  } = useApplies();
 
   const form = useForm({
     defaultValues: {
       input: "",
+      useApplies: "false",
     },
     validators: {
       onSubmit: schema,
@@ -313,10 +337,35 @@ function RouteComponent() {
           .with("attribute", (type) => {
             const rows: AttributeRow["rows"] = [];
             for (const r of group[2].matchAll(attributeRegex)) {
-              rows.push({
-                apply_type: Number(r[2]),
-                apply_value: Number(r[3]),
-              });
+              if (!r[2]) {
+                setErrors((e) => [
+                  ...e,
+                  `${group[1]} - Broken attribute ${r[1]}`,
+                ]);
+                continue;
+              }
+
+              if (value.useApplies === "true") {
+                const value = applyTypeNameMap.get(applyMap.get(Number(r[2]))!);
+
+                if (!value) {
+                  setErrors((e) => [
+                    ...e,
+                    `${group[1]} - Broken attribute ${r[1]}`,
+                  ]);
+                  continue;
+                }
+
+                rows.push({
+                  apply_type: value,
+                  apply_value: Number(r[3]),
+                });
+              } else {
+                rows.push({
+                  apply_type: Number(r[2]),
+                  apply_value: Number(r[3]),
+                });
+              }
             }
 
             return {
@@ -334,8 +383,8 @@ function RouteComponent() {
 
       setResult(output);
 
-      toast("You submitted the following values:", {
-        position: "bottom-left",
+      toast("You have successfully generated special_item_group.json", {
+        position: "bottom-right",
       });
     },
   });
@@ -384,6 +433,103 @@ function RouteComponent() {
                 </Field>
               );
             }}
+          />
+          <form.Field
+            name="useApplies"
+            children={(field) => {
+              const isInvalid =
+                field.state.meta.isTouched && !field.state.meta.isValid;
+              return (
+                <Field data-invalid={isInvalid}>
+                  <div className="flex items-center gap-3 -mb-2">
+                    <Checkbox
+                      id={field.name}
+                      name={field.name}
+                      onCheckedChange={(v) =>
+                        form.setFieldValue("useApplies", v ? "true" : "false")
+                      }
+                    />
+                    <FieldLabel htmlFor={field.name}>
+                      Resolve applies to text
+                    </FieldLabel>
+                  </div>
+                  <FieldDescription>
+                    When checking this option it's recommended to fork the{" "}
+                    <a
+                      href="https://github.com/WildEgo/m2-json-schemas/blob/main/special_item_group.json"
+                      rel="noopener noreferrer"
+                      target="_blank"
+                      className="dark:text-foreground"
+                    >
+                      schema
+                    </a>{" "}
+                    and modify it with your own <code>c_aApplyTypeNames</code>.
+                  </FieldDescription>
+                  {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                </Field>
+              );
+            }}
+          />
+          <form.Subscribe
+            selector={(state) => state.values.useApplies}
+            children={(useApplies) =>
+              useApplies == "true" && (
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="secondary" type="button">
+                      Set Apply Data
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Set Apply Data</DialogTitle>
+                      <DialogDescription>
+                        This will be saved in your local storage in case you
+                        wish to use it anywhere else.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4">
+                      <div className="grid gap-3">
+                        <Label htmlFor="e-apply-types">eApplyTypes</Label>
+                        <Textarea
+                          rows={12}
+                          id="e-apply-types"
+                          placeholder="enum EApplyTypes
+{
+	APPLY_NONE,						// 0
+	APPLY_MAX_HP,					// 1
+..."
+                          value={applies}
+                          onChange={(e) => setApplies(e.currentTarget.value)}
+                        />
+                      </div>
+                      <div className="grid gap-3">
+                        <Label htmlFor="e-apply-type-names">
+                          c_aApplyTypeNames
+                        </Label>
+                        <Textarea
+                          rows={12}
+                          id="e-apply-type-names"
+                          placeholder='inline TValueName c_aApplyTypeNames[] = {
+    {"STR", APPLY_STR},
+    {"DEX", APPLY_DEX},
+...'
+                          value={applyTypeNames}
+                          onChange={(e) =>
+                            setApplyTypeNames(e.currentTarget.value)
+                          }
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <DialogClose asChild>
+                        <Button variant="outline">Close</Button>
+                      </DialogClose>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              )
+            }
           />
         </FieldGroup>
         {!!errors.length && (

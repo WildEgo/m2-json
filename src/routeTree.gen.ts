@@ -10,11 +10,35 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SpecialItemGroupRouteImport } from './routes/special-item-group'
+import { Route as MobDropItemRouteImport } from './routes/mob-drop-item'
+import { Route as GroupGroupRouteImport } from './routes/group-group'
+import { Route as GroupRouteImport } from './routes/group'
+import { Route as BlendRouteImport } from './routes/blend'
 import { Route as IndexRouteImport } from './routes/index'
 
 const SpecialItemGroupRoute = SpecialItemGroupRouteImport.update({
   id: '/special-item-group',
   path: '/special-item-group',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MobDropItemRoute = MobDropItemRouteImport.update({
+  id: '/mob-drop-item',
+  path: '/mob-drop-item',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GroupGroupRoute = GroupGroupRouteImport.update({
+  id: '/group-group',
+  path: '/group-group',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GroupRoute = GroupRouteImport.update({
+  id: '/group',
+  path: '/group',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlendRoute = BlendRouteImport.update({
+  id: '/blend',
+  path: '/blend',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -25,27 +49,62 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/blend': typeof BlendRoute
+  '/group': typeof GroupRoute
+  '/group-group': typeof GroupGroupRoute
+  '/mob-drop-item': typeof MobDropItemRoute
   '/special-item-group': typeof SpecialItemGroupRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/blend': typeof BlendRoute
+  '/group': typeof GroupRoute
+  '/group-group': typeof GroupGroupRoute
+  '/mob-drop-item': typeof MobDropItemRoute
   '/special-item-group': typeof SpecialItemGroupRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/blend': typeof BlendRoute
+  '/group': typeof GroupRoute
+  '/group-group': typeof GroupGroupRoute
+  '/mob-drop-item': typeof MobDropItemRoute
   '/special-item-group': typeof SpecialItemGroupRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/special-item-group'
+  fullPaths:
+    | '/'
+    | '/blend'
+    | '/group'
+    | '/group-group'
+    | '/mob-drop-item'
+    | '/special-item-group'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/special-item-group'
-  id: '__root__' | '/' | '/special-item-group'
+  to:
+    | '/'
+    | '/blend'
+    | '/group'
+    | '/group-group'
+    | '/mob-drop-item'
+    | '/special-item-group'
+  id:
+    | '__root__'
+    | '/'
+    | '/blend'
+    | '/group'
+    | '/group-group'
+    | '/mob-drop-item'
+    | '/special-item-group'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BlendRoute: typeof BlendRoute
+  GroupRoute: typeof GroupRoute
+  GroupGroupRoute: typeof GroupGroupRoute
+  MobDropItemRoute: typeof MobDropItemRoute
   SpecialItemGroupRoute: typeof SpecialItemGroupRoute
 }
 
@@ -56,6 +115,34 @@ declare module '@tanstack/react-router' {
       path: '/special-item-group'
       fullPath: '/special-item-group'
       preLoaderRoute: typeof SpecialItemGroupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mob-drop-item': {
+      id: '/mob-drop-item'
+      path: '/mob-drop-item'
+      fullPath: '/mob-drop-item'
+      preLoaderRoute: typeof MobDropItemRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/group-group': {
+      id: '/group-group'
+      path: '/group-group'
+      fullPath: '/group-group'
+      preLoaderRoute: typeof GroupGroupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/group': {
+      id: '/group'
+      path: '/group'
+      fullPath: '/group'
+      preLoaderRoute: typeof GroupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blend': {
+      id: '/blend'
+      path: '/blend'
+      fullPath: '/blend'
+      preLoaderRoute: typeof BlendRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -70,6 +157,10 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BlendRoute: BlendRoute,
+  GroupRoute: GroupRoute,
+  GroupGroupRoute: GroupGroupRoute,
+  MobDropItemRoute: MobDropItemRoute,
   SpecialItemGroupRoute: SpecialItemGroupRoute,
 }
 export const routeTree = rootRouteImport
